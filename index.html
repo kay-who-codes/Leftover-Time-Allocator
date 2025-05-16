@@ -50,6 +50,10 @@
             background-clip: text;
             color: transparent;
         }
+
+			h2 {
+            margin-bottom: 20px;
+			}
         
         p {
             color: var(--text-secondary);
@@ -225,225 +229,196 @@
             <h1>Leftover Time Allocator</h1>
             <p>See how much time you have left today and allocate it to activities</p>
         </header>
-        
+
         <div class="card">
             <div class="form-group">
                 <label for="current-time">Current Time</label>
                 <input type="time" id="current-time">
             </div>
-            
+
             <div class="used-time-container">
-                <label>Already Used Time Today</label>
+                <label>Time Negated</label>
                 <div id="used-time-list">
                     <div class="used-time-item">
-                        <input type="number" placeholder="Hours" min="0" max="24" step="0.5" value="" class="used-time-input">
+                        <input type="time" class="used-time-input" value="00:00">
                         <button class="btn remove-used-time">×</button>
                     </div>
                 </div>
                 <button class="add-btn" id="add-used-time">+ Add Used Time</button>
             </div>
-            
-<div class="activity-container">
-    <label>Activities</label>
-    <div id="activity-list">
-        <div class="activity-item">
-            <input type="text" placeholder="Activity name" class="activity-name" value="Fun">
-            <input type="number" placeholder="%" min="0" max="100" class="activity-percentage" value="60">
-            <button class="btn remove-activity">×</button>
-        </div>
-        <div class="activity-item">
-            <input type="text" placeholder="Activity name" class="activity-name" value="Productivity">
-            <input type="number" placeholder="%" min="0" max="100" class="activity-percentage" value="40">
-            <button class="btn remove-activity">×</button>
-        </div>
-    </div>
-    <button class="add-btn" id="add-activity">+ Add Activity</button>
-</div>
-        
-        <div class="results">
-            <h2>Time Left Today</h2>
-            <div class="time-left" id="total-time-left">--:--</div>
-            
-            <h2>Allocations</h2>
-            <div class="allocations" id="allocations-container">
-                <!-- Allocations will be added here dynamically -->
+
+            <div class="activity-container">
+                <label>Activities</label>
+                <div id="activity-list">
+                    <!-- Activities dynamically added -->
+                </div>
+                <button class="add-btn" id="add-activity">+ Add Activity</button>
+            </div>
+
+            <div class="results">
+                <h2>Time Left Today</h2>
+                <div class="time-left" id="total-time-left">--:--</div>
+
+                <h2>Allocations</h2>
+                <div class="allocations" id="allocations-container">
+                    <!-- Allocations will be added here dynamically -->
+                </div>
             </div>
         </div>
-    </div>
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Set current time as default
-            const now = new Date();
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            document.getElementById('current-time').value = `${hours}:${minutes}`;
-            
-            // Event listeners for adding/removing items
-            document.getElementById('add-used-time').addEventListener('click', addUsedTime);
-            document.getElementById('add-activity').addEventListener('click', addActivity);
-            
-            // Add event listeners to existing items
-            addRemoveListeners();
-            
-            // Calculate on any input change
-            document.addEventListener('input', calculateTime);
-            
-            // Initial calculation
-            calculateTime();
-            
-            function addUsedTime() {
-                const usedTimeList = document.getElementById('used-time-list');
-                const newItem = document.createElement('div');
-                newItem.className = 'used-time-item';
-                newItem.innerHTML = `
-                    <input type="number" placeholder="Hours" min="0" max="24" step="0.5" class="used-time-input">
-                    <button class="btn remove-used-time">×</button>
-                `;
-                usedTimeList.appendChild(newItem);
-                addRemoveListeners();
-                newItem.querySelector('input').focus();
-            }
-            
-            function addActivity() {
-                const activityList = document.getElementById('activity-list');
-                const newItem = document.createElement('div');
-                newItem.className = 'activity-item';
-                newItem.innerHTML = `
-                    <input type="text" placeholder="Activity name" class="activity-name">
-                    <input type="number" placeholder="%" min="0" max="100" class="activity-percentage">
-                    <button class="btn remove-activity">×</button>
-                `;
-                activityList.appendChild(newItem);
-                addRemoveListeners();
-                newItem.querySelector('input').focus();
-            }
-            
-            function addRemoveListeners() {
-                document.querySelectorAll('.remove-used-time').forEach(btn => {
-                    btn.removeEventListener('click', removeUsedTime);
-                    btn.addEventListener('click', removeUsedTime);
-                });
-                
-                document.querySelectorAll('.remove-activity').forEach(btn => {
-                    btn.removeEventListener('click', removeActivity);
-                    btn.addEventListener('click', removeActivity);
-                });
-            }
-            
-            function removeUsedTime(e) {
-                const usedTimeList = document.getElementById('used-time-list');
-                if (usedTimeList.children.length > 1) {
+
+        <script>
+document.addEventListener('DOMContentLoaded', function () {
+    const colourPalette = [
+        '#00FFFF', '#FFA500', '#0000FF', '#7CFC00', '#FF00FF', '#4169E1', '#FFD700',
+        '#9400D3', '#93e449', '#FF1493', '#00FA9A', '#bcbcbc', '#FF8C00', '#2db92d', '#fd95e8',
+        '#1E90FF', '#FFD700', '#4B0082', '#FF6347', '#00CED1', '#FF4500', '#9932CC', '#9ACD32', '#FF0000'
+    ];
+
+    // Set current time
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    document.getElementById('current-time').value = `${hours}:${minutes}`;
+
+    // Add default activities
+    const defaultActivities = [
+        { name: 'Fun', percentage: 60 },
+        { name: 'Productivity', percentage: 40 }
+    ];
+    const activityList = document.getElementById('activity-list');
+    activityList.innerHTML = '';
+    defaultActivities.forEach(({ name, percentage }) => {
+        const item = document.createElement('div');
+        item.className = 'activity-item';
+        item.innerHTML = `
+            <input type="text" placeholder="Activity name" class="activity-name" value="${name}">
+            <input type="number" placeholder="%" min="0" max="100" class="activity-percentage" value="${percentage}">
+            <button class="btn remove-activity">×</button>
+        `;
+        activityList.appendChild(item);
+    });
+
+    // Attach handlers
+    document.getElementById('add-used-time').addEventListener('click', addUsedTime);
+    document.getElementById('add-activity').addEventListener('click', addActivity);
+    document.addEventListener('input', calculateTime);
+    addRemoveListeners();
+    calculateTime();
+
+    function addUsedTime() {
+        const container = document.getElementById('used-time-list');
+        const item = document.createElement('div');
+        item.className = 'used-time-item';
+        item.innerHTML = `
+            <input type="time" class="used-time-input" value="00:00">
+            <button class="btn remove-used-time">×</button>
+        `;
+        container.appendChild(item);
+        addRemoveListeners();
+        item.querySelector('input').focus();
+    }
+
+    function addActivity() {
+        const container = document.getElementById('activity-list');
+        const item = document.createElement('div');
+        item.className = 'activity-item';
+        item.innerHTML = `
+            <input type="text" placeholder="Activity name" class="activity-name">
+            <input type="number" placeholder="%" min="0" max="100" class="activity-percentage">
+            <button class="btn remove-activity">×</button>
+        `;
+        container.appendChild(item);
+        addRemoveListeners();
+        item.querySelector('input').focus();
+    }
+
+    function addRemoveListeners() {
+        document.querySelectorAll('.remove-used-time').forEach(btn => {
+            btn.onclick = e => {
+                const list = document.getElementById('used-time-list');
+                if (list.children.length > 1) {
                     e.target.closest('.used-time-item').remove();
                     calculateTime();
                 }
-            }
-            
-            function removeActivity(e) {
-                const activityList = document.getElementById('activity-list');
-                if (activityList.children.length > 1) {
+            };
+        });
+
+        document.querySelectorAll('.remove-activity').forEach(btn => {
+            btn.onclick = e => {
+                const list = document.getElementById('activity-list');
+                if (list.children.length > 1) {
                     e.target.closest('.activity-item').remove();
                     calculateTime();
                 }
-            }
-            
-            function calculateTime() {
-                // Get current time
-                const currentTimeInput = document.getElementById('current-time').value;
-                if (!currentTimeInput) return;
-                
-                const [currentHours, currentMinutes] = currentTimeInput.split(':').map(Number);
-                
-                // Calculate current time in hours (decimal)
-                const currentTimeInHours = currentHours + (currentMinutes / 60);
-                
-                // Get used time
-                let totalUsedTime = 0;
-                document.querySelectorAll('.used-time-input').forEach(input => {
-                    if (input.value) {
-                        totalUsedTime += parseFloat(input.value);
-                    }
-                });
-                
-                // Calculate time left in hours
-                const timeLeftInHours = 24 - currentTimeInHours - totalUsedTime;
-                
-                // Display time left in human-readable format
-                const timeLeftHours = Math.floor(timeLeftInHours);
-                const timeLeftMinutes = Math.round((timeLeftInHours - timeLeftHours) * 60);
-                
-                let timeLeftDisplay = '';
-                if (timeLeftHours > 0) {
-                    timeLeftDisplay += `${timeLeftHours} hour${timeLeftHours !== 1 ? 's' : ''}`;
-                }
-                if (timeLeftMinutes > 0) {
-                    if (timeLeftDisplay) timeLeftDisplay += ', ';
-                    timeLeftDisplay += `${timeLeftMinutes} minute${timeLeftMinutes !== 1 ? 's' : ''}`;
-                }
-                if (!timeLeftDisplay) {
-                    timeLeftDisplay = '0 minutes';
-                }
-                
-                document.getElementById('total-time-left').textContent = timeLeftDisplay;
-                
-                // Calculate allocations
-                const allocationsContainer = document.getElementById('allocations-container');
-                allocationsContainer.innerHTML = '';
-                
-                const activities = [];
-                document.querySelectorAll('.activity-item').forEach(item => {
-                    const name = item.querySelector('.activity-name').value;
-                    const percentage = item.querySelector('.activity-percentage').value;
-                    
-                    if (name && percentage) {
-                        activities.push({ name, percentage: parseFloat(percentage) });
-                    }
-                });
-                
-                // Check if total percentage exceeds 100%
-                const totalPercentage = activities.reduce((sum, activity) => sum + activity.percentage, 0);
-                
-                activities.forEach(activity => {
-                    const allocationItem = document.createElement('div');
-                    allocationItem.className = 'allocation-item';
-                    
-                    // Calculate time for this activity
-                    const activityTimeInHours = (timeLeftInHours * activity.percentage) / 100;
-                    const activityHours = Math.floor(activityTimeInHours);
-                    const activityMinutes = Math.round((activityTimeInHours - activityHours) * 60);
-                    
-                    let activityTimeDisplay = '';
-                    if (activityHours > 0) {
-                        activityTimeDisplay += `${activityHours} hour${activityHours !== 1 ? 's' : ''}`;
-                    }
-                    if (activityMinutes > 0) {
-                        if (activityTimeDisplay) activityTimeDisplay += ', ';
-                        activityTimeDisplay += `${activityMinutes} minute${activityMinutes !== 1 ? 's' : ''}`;
-                    }
-                    if (!activityTimeDisplay) {
-                        activityTimeDisplay = '0 minutes';
-                    }
-                    
-                    allocationItem.innerHTML = `
-                        <h3>${activity.name} (${activity.percentage}%)</h3>
-                        <p>${activityTimeDisplay}</p>
-                    `;
-                    allocationsContainer.appendChild(allocationItem);
-                });
-                
-                // Show warning if total percentage exceeds 100%
-                if (totalPercentage > 100) {
-                    const warningItem = document.createElement('div');
-                    warningItem.className = 'allocation-item';
-                    warningItem.style.borderColor = '#ff5252';
-                    warningItem.innerHTML = `
-                        <h3 style="color: #ff5252;">Warning</h3>
-                        <p style="color: #ff5252;">Total allocation exceeds 100%</p>
-                    `;
-                    allocationsContainer.prepend(warningItem);
-                }
+            };
+        });
+    }
+
+    function calculateTime() {
+        const currentTimeInput = document.getElementById('current-time').value;
+        if (!currentTimeInput) return;
+
+        const [currentHours, currentMinutes] = currentTimeInput.split(':').map(Number);
+        const currentTimeInHours = currentHours + (currentMinutes / 60);
+
+        let totalUsed = 0;
+        document.querySelectorAll('.used-time-input').forEach(input => {
+            if (input.value) {
+                const [h, m] = input.value.split(':').map(Number);
+                totalUsed += h + (m / 60);
             }
         });
-    </script>
+
+        const timeLeft = 24 - currentTimeInHours - totalUsed;
+        const h = Math.floor(timeLeft);
+        const m = Math.round((timeLeft - h) * 60);
+        const timeStr = h > 0 || m > 0
+            ? `${h > 0 ? `${h} hour${h !== 1 ? 's' : ''}` : ''}${(h > 0 && m > 0) ? ', ' : ''}${m > 0 ? `${m} minute${m !== 1 ? 's' : ''}` : ''}`
+            : '0 minutes';
+        document.getElementById('total-time-left').textContent = timeStr;
+
+        const container = document.getElementById('allocations-container');
+        container.innerHTML = '';
+
+        const activities = [];
+        document.querySelectorAll('.activity-item').forEach(item => {
+            const name = item.querySelector('.activity-name').value.trim();
+            const percentage = parseFloat(item.querySelector('.activity-percentage').value);
+            if (name && !isNaN(percentage)) {
+                activities.push({ name, percentage });
+            }
+        });
+
+        const totalPct = activities.reduce((sum, a) => sum + a.percentage, 0);
+
+        activities.forEach((activity, index) => {
+            const allocationTime = (timeLeft * activity.percentage) / 100;
+            const ah = Math.floor(allocationTime);
+            const am = Math.round((allocationTime - ah) * 60);
+            const display = ah > 0 || am > 0
+                ? `${ah > 0 ? `${ah} hour${ah !== 1 ? 's' : ''}` : ''}${(ah > 0 && am > 0) ? ', ' : ''}${am > 0 ? `${am} minute${am !== 1 ? 's' : ''}` : ''}`
+                : '0 minutes';
+
+            const colour = colourPalette[index % colourPalette.length];
+
+            const div = document.createElement('div');
+            div.className = 'allocation-item';
+            div.style.borderLeft = `8px solid ${colour}`;
+            div.style.paddingLeft = '12px';
+            div.innerHTML = `<h3 style="color:${colour};">${activity.name} (${activity.percentage}%)</h3><p>${display}</p>`;
+            container.appendChild(div);
+        });
+
+        if (totalPct > 100) {
+            const warn = document.createElement('div');
+            warn.className = 'allocation-item';
+            warn.style.borderLeft = '8px solid #ff5252';
+            warn.style.paddingLeft = '12px';
+            warn.innerHTML = `<h3 style="color: #ff5252;">Warning</h3><p style="color: #ff5252;">Total allocation exceeds 100%</p>`;
+            container.prepend(warn);
+        }
+    }
+});
+</script>
 </body>
 </html>
